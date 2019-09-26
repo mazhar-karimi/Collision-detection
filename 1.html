@@ -1,0 +1,184 @@
+<html>
+
+<head>
+    <style>
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        #canvas {
+            width: calc(100% - 50px);
+            height: calc(100% - 50px);
+            border: 1px solid black;
+        }
+
+        #watchwindow {
+            position: absolute;
+            background: lightgoldenrodyellow;
+            height: 400px;
+            min-width: 300px;
+            top: 10px;
+            right: 10px;
+            overflow-y: scroll;
+
+            box-shadow: 1px 1px 1px 1px black;
+        }
+    </style>
+    <script>
+
+        function trianglearea(x1, y1, x2, y2, x3, y3) {
+            return Math.abs(
+                (
+                    x1 * (y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2)
+                ) 
+                / 2);
+        }
+        function area(x1, y1, x2, y2, x3, y3, x4, y4) {
+            // return Math.abs((
+            //     x1 * (y2 - y3) +
+            //     x2 * (y1 - y3) +
+            //     x3 * (y1 - y2) + 
+            //     x4 * (y3 - y4) 
+            //     ) / 2.0);
+
+            return Math.abs((
+                (x1 * y2 - y1 * x2) + (x2 * y3 - y2 * x3) + (x3 * y4 - y3 * x4) + (x4 * y1 - y4 * x1)
+
+            ) / 2
+
+            );
+        }
+
+        function isInsideRect(x1, y1, x2, y2, x3, y3, x4, y4, x, y) {
+            var A = area(x1, y1, x2, y2, x3, y3, x4, y4);
+
+            var A1 = trianglearea(x, y, x1, y1, x2, y2);
+
+            var A2 = trianglearea(x, y, x2, y2, x3, y3);
+
+            var A3 = trianglearea(x, y, x3, y3, x4, y4);
+
+            var A4 = trianglearea(x, y, x4, y4, x1, y1);
+
+            var combine = Math.abs(A1 + A2 + A3 + A4);
+            // AddToWatch("cb", combine);
+            // AddToWatch("A", A);
+
+            return (A == combine);
+        }
+
+        function detectrectcollision(r1, r2) {
+            var r1_x1 = r1.offsetLeft;
+            var r1_y1 = r1.offsetTop;
+
+            var r1_x2 = r1.offsetLeft + r1.clientWidth;
+            var r1_y2 = r1.offsetTop;
+
+            var r1_x3 = r1.offsetLeft + r1.clientWidth;
+            var r1_y3 = r1.offsetTop + r1.clientHeight;
+
+            var r1_x4 = r1.offsetLeft;
+            var r1_y4 = r1.offsetTop + r1.clientHeight;
+
+            // let x = r2.offsetLeft;
+            // let y = r2.offsetTop;
+                        
+            if (isInsideRect(r1_x1, r1_y1, r1_x2, r1_y2, r1_x3, r1_y3, r1_x4, r1_y4, r2.offsetLeft, r2.offsetTop)
+                || 
+                isInsideRect(r1_x1, r1_y1, r1_x2, r1_y2, r1_x3, r1_y3, r1_x4, r1_y4, (r2.offsetLeft + r2.clientWidth),r2.offsetTop)
+                ||
+                isInsideRect(r1_x1, r1_y1, r1_x2, r1_y2, r1_x3, r1_y3, r1_x4, r1_y4, r2.offsetLeft+r2.clientWidth, r2.offsetTop+r2.clientHeight)
+                ||
+                isInsideRect(r1_x1, r1_y1, r1_x2, r1_y2, r1_x3, r1_y3, r1_x4, r1_y4,r2.offsetLeft , r2.offsetTop+r2.clientHeight)
+            ) {                
+                return true;
+
+            }
+            else {
+                return false;   
+            }
+        }
+
+        document.onload = function () {
+
+        };
+
+        function AddToWatch(name, value) {
+            var watchwindow = document.getElementById('watchwindow');
+            watchwindow.innerHTML += "<p>" + name + ": " + value + "</p>";
+            watchwindow.scrollTop = watchwindow.scrollHeight;
+        }
+
+        function randomcolor() {
+            return "rgb(" + 255 * Math.random() + ", "
+                + 255 * Math.random() + "," + 200 * Math.random() + ")"
+        }
+        function rectangle(w, h, x, y, targetid, color) {
+
+            var rect = document.createElement('div');
+            rect.style.position = "absolute";
+            rect.style.width = w + "px";
+            rect.style.height = h + "px";
+            if (color == undefined || color == null)
+                rect.style.border = "1px solid " + randomcolor();
+            else
+                rect.style.backgroundColor = color;
+            rect.style.marginLeft = x + "px";
+            rect.style.marginTop = y + "px";
+
+            document.getElementById(targetid).appendChild(rect);
+            return rect;
+        }
+    </script>
+</head>
+
+<body>
+    <div id="canvas">
+
+    </div>
+    <div id="watchwindow">
+
+    </div>
+
+    <script>
+        var r1 = rectangle(150, 150, 175, 175, 'canvas', "red");
+        var r2 = rectangle(50, 50, 600, 600, 'canvas', "gray");
+
+        r2.onmousedown = function (e) {
+            var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+
+            r2.onmouseup = function () {
+                r2.onmouseup = null;
+                r2.onmousemove = null;
+            }
+            r2.onmousemove = function (e2) {
+
+                e2.preventDefault();
+
+                pos1 = pos3 - e2.clientX;
+                pos2 = pos4 - e2.clientY;
+                pos3 = e2.clientX;
+                pos4 = e2.clientY;
+
+                r2.style.marginTop = (r2.offsetTop - 1 - pos2) + "px";
+                r2.style.marginLeft = (r2.offsetLeft - 1 - pos1) + "px";
+
+                var result = detectrectcollision(r1, r2);
+                console.log(result);
+
+                if (result) {
+                    r1.style.backgroundColor = "green";
+                }
+                else
+                    r1.style.backgroundColor = "red";
+            };
+        };
+    </script>
+</body>
+
+</html>
